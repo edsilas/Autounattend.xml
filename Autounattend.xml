@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ============================================================================
+  Autounattend.xml  -  Instalacao automatizada e silenciosa
+  Compativel com Windows 10 e Windows 11 (x64 / amd64)
+  Coloque este arquivo na RAIZ da midia/ISO de instalacao.
+  ============================================================================
+  ATENCAO: A secao <DiskConfiguration> ativa abaixo esta configurada para
+  UEFI/GPT (padrao moderno, exigido pelo Windows 11). Para BIOS Legacy/MBR
+  ou deteccao automatica de firmware.
+
+  AVISO DE SEGURANCA DE DADOS: este arquivo APAGA o Disco 0 (WillWipeDisk).
+  Verifique qual e o disco de destino antes de usar em maquina com dados.
+
+  CONTA LOCAL SEM CONTA MICROSOFT: feita pelo metodo CORRETO e suportado.
+  A conta "User" e provisionada no passe oobeSystem (LocalAccounts) e as
+  telas de conta online sao ocultadas (HideOnlineAccountScreens). Como a
+  conta ja e criada pelo proprio answer file, o OOBE nao tem o que perguntar
+  e nao exige rede/conta Microsoft. NAO se usa o truque BypassNRO (que so
+  funciona via HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE e e
+  desnecessario aqui, alem de ignorado em builds recentes do Windows 11).
+  ============================================================================
+-->
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+
+  <!-- ====================================================================
+       PASSE 1: windowsPE
+       Configura idioma do Setup, particiona o disco, seleciona a imagem,
+       aceita EULA, define edicao e aplica os bypasses do Windows 11.
+       ==================================================================== -->
+  <settings pass="windowsPE">
+
+    <!-- Idioma/teclado durante o ambiente de instalacao (WinPE) -->
+    <component name="Microsoft-Windows-International-Core-WinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <SetupUILanguage>
+        <UILanguage>pt-BR</UILanguage>
+      </SetupUILanguage>
+      <!-- 0416 = pt-BR ; 00010416 = teclado Portugues (Brasil ABNT2),
+           o layout fisico mais comum no Brasil (tecla Ç dedicada, / e ?
+           no bloco numerico). Para ABNT (1a geracao) use 0416:00000416. -->
+      <InputLocale>0416:00010416</InputLocale>
+      <SystemLocale>pt-BR</SystemLocale>
+      <UILanguage>pt-BR</UILanguage>
+      <UILanguageFallback>en-US</UILanguageFallback>
+      <UserLocale>pt-BR</UserLocale>
+    </component>
+
+    <component name="Microsoft-Windows-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+      <!-- ==== PARTICIONAMENTO: UEFI / GPT (PADRAO ATIVO) ==== -->
+      <DiskConfiguration>
+        <WillShowUI>OnError</WillShowUI>
+        <Disk wcm:action="add">
+          <DiskID>0</DiskID>
+          <WillWipeDisk>true</WillWipeDisk>
+          <CreatePartitions>
+            <!-- 1) Particao de Sistema EFI (FAT32) -->
+            <CreatePartition wcm:action="add">
+              <Order>1</Order>
+              <Type>EFI</Type>
+              <Size>300</Size>
+            </CreatePartition>
+            <!-- 2) Particao reservada da Microsoft (MSR) -->
+            <CreatePartition wcm:action="add">
+              <Order>2</Order>
+              <Type>MSR</Type>
+              <Size>16</Size>
+            </CreatePartition>
+            <!-- 3) Particao do Windows (ocupa o restante do disco) -->
+            <CreatePartition wcm:action="add">
+              <Order>3</Order>
+              <Type>Primary</Type>
+              <Extend>true</Extend>
+            </CreatePartition>
+          </CreatePartitions>
+          <ModifyPartitions>
+            <ModifyPartition wcm:action="add">
+              <Order>1</Order>
+              <PartitionID>1</PartitionID>
+              <Label>System</Label>
+              <Format>FAT32</Format>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>2</Order>
+              <PartitionID>2</PartitionID>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>3</Order>
+              <PartitionID>3</PartitionID>
+              <Label>Windows</Label>
+              <Format>NTFS</Format>
+              <Letter>W</Letter>
+            </ModifyPartition>
+          </ModifyPartitions>
+        </Disk>
+      </DiskConfiguration>
+
+      <ImageInstall>
+        <OSImage>
+          <!-- UEFI/GPT: Windows fica na particao 3.
+               Se trocar para BIOS/MBR, ajuste PartitionID para 2. -->
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>3</PartitionID>
+          </InstallTo>
+          <WillShowUI>OnError</WillShowUI>
+          <InstallToAvailablePartition>false</InstallToAvailablePartition>
+        </OSImage>
+      </ImageInstall>
+
+      <UserData>
+        <AcceptEula>true</AcceptEula>
+        <FullName>UserLocal</FullName>
+        <Organization></Organization>
+        <!-- Chave GVLK generica do Windows Pro (Win10 e Win11).
+             Serve APENAS para selecionar a edicao automaticamente e evitar
+             a tela de escolha de edicao. NAO ativa o Windows.
+             IMPORTANTE: a edicao Pro precisa EXISTIR na imagem (install.wim/
+             install.esd). Em ISO so-Home isto falha. Para outra edicao ou
+             chave OEM/propria, substitua. -->
+        <ProductKey>
+          <Key>W269N-WFGWX-YVC9B-4J6C9-T83GX</Key>
+          <WillShowUI>OnError</WillShowUI>
+        </ProductKey>
+      </UserData>
+
+      <!-- ==== BYPASS DE REQUISITOS DO WINDOWS 11 (LabConfig) ==== -->
+      <!-- Metodo suportado pelo Setup. Aplicado no registro do WinPE
+           antes da verificacao de hardware. Inofensivo no Windows 10.
+           Em hardware que JA atende aos requisitos, pode ser removido. -->
+      <RunSynchronous>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Description>Bypass TPM 2.0</Description>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassTPMCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Description>Bypass Secure Boot</Description>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassSecureBootCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Description>Bypass RAM</Description>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassRAMCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>4</Order>
+          <Description>Bypass CPU</Description>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassCPUCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>5</Order>
+          <Description>Bypass Storage</Description>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassStorageCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <!-- NOTA: o comando BypassNRO foi REMOVIDO de proposito. Ele estava
+             gravado no caminho errado (LabConfig) e nao tinha efeito. A
+             dispensa de conta Microsoft/rede e garantida pela conta local
+             provisionada no passe oobeSystem (mais abaixo). -->
+      </RunSynchronous>
+
+    </component>
+  </settings>
+
+  <!-- ====================================================================
+       PASSE 2: specialize
+       Nome de computador automatico e regiao/idioma do SO instalado.
+       ==================================================================== -->
+  <settings pass="specialize">
+
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <!-- "*" = o Windows gera um nome aleatorio automaticamente -->
+      <ComputerName>*</ComputerName>
+      <RegisteredOwner>UserLocal</RegisteredOwner>
+      <RegisteredOrganization></RegisteredOrganization>
+      <TimeZone>E. South America Standard Time</TimeZone>
+    </component>
+
+    <!-- Regiao/idioma do sistema operacional ja instalado -->
+    <component name="Microsoft-Windows-International-Core"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <!-- ABNT2 (00010416) tambem no SO instalado, igual ao WinPE -->
+      <InputLocale>0416:00010416</InputLocale>
+      <SystemLocale>pt-BR</SystemLocale>
+      <UILanguage>pt-BR</UILanguage>
+      <UILanguageFallback>en-US</UILanguageFallback>
+      <UserLocale>pt-BR</UserLocale>
+    </component>
+
+  </settings>
+
+  <!-- ====================================================================
+       PASSE 3: oobeSystem
+       Pula o OOBE, cria conta local "User" sem senha, ativa logon
+       automatico e aplica ajustes de privacidade/telemetria.
+       ==================================================================== -->
+  <settings pass="oobeSystem">
+
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+      <!-- OOBE totalmente automatizado. HideOnlineAccountScreens=true e a
+           conta local provisionada abaixo eliminam qualquer exigencia de
+           conta Microsoft ou de conexao de rede no primeiro boot. -->
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideLocalAccountScreen>true</HideLocalAccountScreen>
+        <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+        <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <NetworkLocation>Work</NetworkLocation>
+        <ProtectYourPC>3</ProtectYourPC>
+        <SkipMachineOOBE>true</SkipMachineOOBE>
+        <SkipUserOOBE>true</SkipUserOOBE>
+      </OOBE>
+
+      <!-- Conta local "User", administrador, SEM senha (conforme solicitado).
+           Esta conta provisionada e o que dispensa a conta Microsoft. -->
+      <UserAccounts>
+        <LocalAccounts>
+          <LocalAccount wcm:action="add">
+            <Name>UserLocal</Name>
+            <DisplayName>UserLocal</DisplayName>
+            <Group>Administrators</Group>
+            <Password>
+              <Value></Value>
+              <PlainText>true</PlainText>
+            </Password>
+          </LocalAccount>
+        </LocalAccounts>
+      </UserAccounts>
+
+      <!-- Logon automatico na conta User (sem senha, permanente) -->
+      <AutoLogon>
+        <Username>UserLocal</Username>
+        <Enabled>true</Enabled>
+        <Password>
+          <Value></Value>
+          <PlainText>true</PlainText>
+        </Password>
+      </AutoLogon>
+
+      <TimeZone>E. South America Standard Time</TimeZone>
+
+      <!-- Ajustes de privacidade aplicados no primeiro logon (admin) -->
+      <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Description>Desabilitar Cortana</Description>
+          <CommandLine>reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v AllowCortana /t REG_DWORD /d 0 /f</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Description>Minimizar telemetria (nivel 0 so e honrado em Enterprise/Education; no Pro e elevado a 1)</Description>
+          <CommandLine>reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Description>Desabilitar experiencias do consumidor</Description>
+          <CommandLine>reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsConsumerFeatures /t REG_DWORD /d 1 /f</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>4</Order>
+          <Description>Desabilitar Windows Spotlight / dicas de boas-vindas</Description>
+          <CommandLine>reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableSoftLanding /t REG_DWORD /d 1 /f</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
+      </FirstLogonCommands>
+
+    </component>
+  </settings>
+
+</unattend>
