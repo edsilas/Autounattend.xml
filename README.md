@@ -60,7 +60,7 @@ O objetivo é fornecer uma instalação padronizada e reproduzível para computa
 ```mermaid
 graph TD
 
-A[Inicialização pelo Pendrive ou ISO] --> B{Arquivo Autounattend.xml encontrado?}
+A[Inicialização pelo Pendrive ou ISO] --> B{Autounattend.xml encontrado?}
 
 B -- Não --> C[Instalação manual]
 
@@ -68,29 +68,29 @@ B -- Sim --> D[Inicialização WinPE]
 
 D --> E[Configuração de idioma e teclado]
 
-E --> F[Aplicação dos bypasses do Windows 11]
+E --> F[Aplicação dos bypasses Windows 11]
 
-F --> G[Limpeza e particionamento do Disco 0 GPT]
+F --> G[Limpeza do Disco 0]
 
-G --> H[Seleção da edição Windows Pro]
+G --> H[Criação das partições GPT]
 
-H --> I[Instalação dos arquivos]
+H --> I[Instalação Windows Pro]
 
 I --> J[Reinicialização]
 
 J --> K[Configuração Specialize]
 
-K --> L[Configuração regional e nome do computador]
+K --> L[Configuração regional]
 
 L --> M[Configuração OOBE]
 
-M --> N[Criação da conta local]
+M --> N[Criação usuário local]
 
-N --> O[Aplicação das configurações de privacidade]
+N --> O[Configurações de privacidade]
 
-O --> P[Configuração de logon automático]
+O --> P[Logon automático]
 
-P --> Q[Área de trabalho disponível]
+P --> Q[Área de trabalho pronta]
 
 style A fill:#107C10,color:#FFFFFF
 style Q fill:#0078D4,color:#FFFFFF
