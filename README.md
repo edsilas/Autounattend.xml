@@ -115,6 +115,7 @@ O arquivo `Autounattend.xml` automatiza as principais fases da instalação do W
 * Windows PE (`windowsPE`);
 * Configuração do sistema (`specialize`);
 * Experiência inicial do usuário (`oobeSystem`).
+---
 
 ---
 
@@ -150,13 +151,14 @@ São aplicadas configurações no registro através do `LabConfig` para ignorar 
 
 ## Particionamento Automático
 
-O Disco 0 é removido e configurado utilizando GPT:
+**Particionamento Automático de Disco (UEFI/GPT):**
+O Disco 0 é selecionado (`<DiskID>0</DiskID>`) e completamente apagado. Três partições são criadas sequencialmente na seguinte ordem:
 
-| Partição | Tamanho         | Sistema de arquivos |
-| -------- | --------------- | ------------------- |
-| EFI      | 300 MB          | FAT32               |
-| MSR      | 16 MB           | Reservada           |
-| Windows  | Espaço restante | NTFS                |
+| Ordem | Partição | Tamanho | Sistema de Arquivos | Rótulo (Label) | Letra |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | EFI (System) | 300 MB | FAT32 | `System` | - |
+| **2** | MSR (Reservada) | 16 MB | - | - | - |
+| **3** | Windows (Primary) | Restante do disco | NTFS | `Windows` | `W` |
 
 ---
 
