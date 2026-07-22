@@ -158,7 +158,7 @@ O Disco 0 é selecionado (`<DiskID>0</DiskID>`) e completamente apagado. Três p
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **1** | EFI (System) | 300 MB | FAT32 | `System` | - |
 | **2** | MSR (Reservada) | 16 MB | - | - | - |
-| **3** | Windows (Primary) | Restante do disco | NTFS | `Windows` | `W` |
+| **3** | Windows (Primary) | Restante do disco | NTFS | `Windows` | `C` |
 
 ---
 
