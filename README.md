@@ -58,44 +58,54 @@ O objetivo é fornecer uma instalação padronizada e reproduzível para computa
 ## Fluxo da Instalação
 
 ```mermaid
-graph TD
-
-A[Inicialização pelo Pendrive ou ISO] --> B{Autounattend.xml encontrado?}
-
-B -- Não --> C[Instalação manual]
-
-B -- Sim --> D[Inicialização WinPE]
-
-D --> E[Configuração de idioma e teclado]
-
-E --> F[Aplicação dos bypasses Windows 11]
-
-F --> G[Limpeza do Disco 0]
-
-G --> H[Criação das partições GPT]
-
-H --> I[Instalação Windows Pro]
-
-I --> J[Reinicialização]
-
-J --> K[Configuração Specialize]
-
-K --> L[Configuração regional]
-
-L --> M[Configuração OOBE]
-
-M --> N[Criação usuário local]
-
-N --> O[Configurações de privacidade]
-
-O --> P[Logon automático]
-
-P --> Q[Área de trabalho pronta]
-
-style A fill:#107C10,color:#FFFFFF
-style Q fill:#0078D4,color:#FFFFFF
+flowchart TD
+    Start([Início / Power ON]) --> FirmwareCheck{Firmware Tipo?}
+    FirmwareCheck -- BIOS Legacy --> Abort[FALHA: Particionamento exige UEFI]
+    FirmwareCheck -- UEFI --> BootEFI[Carrega \EFI\BOOT\BOOTX64.EFI]
+    
+    BootEFI --> LoadWinPE[Carrega WinPE / boot.wim em RAMDisk]
+    LoadWinPE --> SearchXML{Autounattend.xml localizado na Raiz?}
+    
+    SearchXML -- Não --> ManualInstall[Inicia Instalação Interativa Padrão]
+    SearchXML -- Sim --> ParsePass1[Inicia Passe 1: windowsPE]
+    
+    ParsePass1 --> ExecBypasses[Executa Comandos reg add LabConfig]
+    ExecBypasses --> WipeDisk[DiskPart: Clean & Format no Disco 0]
+    WipeDisk --> ApplyWIM[Extrai install.wim na Partição Primary]
+    
+    ApplyWIM --> Reboot1((Reboot Máquina))
+    Reboot1 --> ParsePass4[Inicia Passe 4: specialize]
+    
+    ParsePass4 --> SetHostname[Gera Nome do Computador & Timezone]
+    SetHostname --> Reboot2((Reboot Máquina))
+    
+    Reboot2 --> ParsePass7[Inicia Passe 7: oobeSystem]
+    ParsePass7 --> SkipOOBEUI[Suprime Interfaces do OOBE]
+    SkipOOBEUI --> CreateUser[Cria Usuário Local Admin]
+    CreateUser --> FirstLogon[Executa FirstLogonCommands]
+    FirstLogon --> Desktop([Área de Trabalho Pronta])
 ```
+## Sequência do AutoLogon e Primeiro Login
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Win as Windows Kernel
+    participant Winlogon as Winlogon / LSASS
+    participant Shell as Explorer.exe
+    participant Cmd as FirstLogonCommands
+
+    Win->>Winlogon: Finaliza passe oobeSystem
+    Winlogon->>Winlogon: Lê configurações da tag <AutoLogon>
+    Winlogon->>Winlogon: Autentica usuário "UserLocal" (sem senha)
+    Winlogon->>Shell: Inicia ambiente do Usuário
+    Shell->>Cmd: Executa comandos cadastrados no XML
+    Cmd->>Cmd: Injeta chave Registry AllowCortana = 0
+    Cmd->>Cmd: Injeta chave Registry AllowTelemetry = 0
+    Cmd->>Cmd: Injeta chave Registry DisableConsumerFeatures = 1
+    Cmd->>Shell: Finaliza comandos
+    Shell->>Win: Sistema Operacional Operacional
+```
 ---
 
 # Funcionalidades
