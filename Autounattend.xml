@@ -101,7 +101,7 @@
               <PartitionID>3</PartitionID>
               <Label>Windows</Label>
               <Format>NTFS</Format>
-              <Letter>W</Letter>
+              <Letter>C</Letter>
             </ModifyPartition>
           </ModifyPartitions>
         </Disk>
