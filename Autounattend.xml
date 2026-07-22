@@ -6,19 +6,27 @@
   Coloque este arquivo na RAIZ da midia/ISO de instalacao.
   ============================================================================
   ATENCAO: A secao <DiskConfiguration> ativa abaixo esta configurada para
-  UEFI/GPT (padrao moderno, exigido pelo Windows 11). Para BIOS Legacy/MBR
-  ou deteccao automatica de firmware.
+  UEFI/GPT (padrao moderno, exigido pelo Windows 11). Para BIOS Legacy/MBR,
+  use o bloco alternativo comentado no final deste arquivo (secao
+  "ALTERNATIVA BIOS LEGACY / MBR") e ajuste o PartitionID do ImageInstall
+  de 3 para 2, conforme indicado nos comentarios.
 
   AVISO DE SEGURANCA DE DADOS: este arquivo APAGA o Disco 0 (WillWipeDisk).
   Verifique qual e o disco de destino antes de usar em maquina com dados.
 
   CONTA LOCAL SEM CONTA MICROSOFT: feita pelo metodo CORRETO e suportado.
-  A conta "User" e provisionada no passe oobeSystem (LocalAccounts) e as
-  telas de conta online sao ocultadas (HideOnlineAccountScreens). Como a
+  A conta "UserLocal" e provisionada no passe oobeSystem (LocalAccounts) e
+  as telas de conta online sao ocultadas (HideOnlineAccountScreens). Como a
   conta ja e criada pelo proprio answer file, o OOBE nao tem o que perguntar
   e nao exige rede/conta Microsoft. NAO se usa o truque BypassNRO (que so
   funciona via HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE e e
   desnecessario aqui, alem de ignorado em builds recentes do Windows 11).
+
+  SEGURANCA: a conta "UserLocal" e criada como Administrador e SEM senha,
+  com logon automatico permanente. Isso e conveniente para laboratorio e
+  maquinas virtuais, mas NAO e recomendado para computadores de uso real.
+  Defina uma senha apos a instalacao (Configuracoes > Contas) se o
+  computador for usado no dia a dia.
   ============================================================================
 -->
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
@@ -43,7 +51,8 @@
       </SetupUILanguage>
       <!-- 0416 = pt-BR ; 00010416 = teclado Portugues (Brasil ABNT2),
            o layout fisico mais comum no Brasil (tecla Ç dedicada, / e ?
-           no bloco numerico). Para ABNT (1a geracao) use 0416:00000416. -->
+           no bloco numerico). Para ABNT (1a geracao) use 0416:00000416.
+           Para teclado americano (US) use 0416:00000409. -->
       <InputLocale>0416:00010416</InputLocale>
       <SystemLocale>pt-BR</SystemLocale>
       <UILanguage>pt-BR</UILanguage>
@@ -78,7 +87,11 @@
               <Type>MSR</Type>
               <Size>16</Size>
             </CreatePartition>
-            <!-- 3) Particao do Windows (ocupa o restante do disco) -->
+            <!-- 3) Particao do Windows (ocupa o restante do disco).
+                 Observacao: sem particao de recuperacao dedicada, o
+                 Windows guarda o ambiente de recuperacao (WinRE) dentro
+                 de C:\Recovery. Isso funciona normalmente; uma particao
+                 de recuperacao separada e opcional. -->
             <CreatePartition wcm:action="add">
               <Order>3</Order>
               <Type>Primary</Type>
@@ -129,7 +142,9 @@
              a tela de escolha de edicao. NAO ativa o Windows.
              IMPORTANTE: a edicao Pro precisa EXISTIR na imagem (install.wim/
              install.esd). Em ISO so-Home isto falha. Para outra edicao ou
-             chave OEM/propria, substitua. -->
+             chave OEM/propria, substitua.
+             Para Windows Home, troque a chave por:
+             YTMG3-N6DKC-DKB77-7M9GH-8HVX7 -->
         <ProductKey>
           <Key>W269N-WFGWX-YVC9B-4J6C9-T83GX</Key>
           <WillShowUI>OnError</WillShowUI>
@@ -139,7 +154,10 @@
       <!-- ==== BYPASS DE REQUISITOS DO WINDOWS 11 (LabConfig) ==== -->
       <!-- Metodo suportado pelo Setup. Aplicado no registro do WinPE
            antes da verificacao de hardware. Inofensivo no Windows 10.
-           Em hardware que JA atende aos requisitos, pode ser removido. -->
+           Em hardware que JA atende aos requisitos, pode ser removido.
+           LIMITE: no Windows 11 24H2 ou mais recente, CPUs muito antigas
+           (sem instrucoes SSE4.2/POPCNT, em geral anteriores a ~2009)
+           NAO funcionam de forma alguma; nenhum bypass resolve isso. -->
       <RunSynchronous>
         <RunSynchronousCommand wcm:action="add">
           <Order>1</Order>
@@ -215,7 +233,7 @@
 
   <!-- ====================================================================
        PASSE 3: oobeSystem
-       Pula o OOBE, cria conta local "User" sem senha, ativa logon
+       Pula o OOBE, cria conta local "UserLocal" sem senha, ativa logon
        automatico e aplica ajustes de privacidade/telemetria.
        ==================================================================== -->
   <settings pass="oobeSystem">
@@ -230,20 +248,23 @@
 
       <!-- OOBE totalmente automatizado. HideOnlineAccountScreens=true e a
            conta local provisionada abaixo eliminam qualquer exigencia de
-           conta Microsoft ou de conexao de rede no primeiro boot. -->
+           conta Microsoft ou de conexao de rede no primeiro boot.
+           NOTA: as opcoes SkipMachineOOBE e SkipUserOOBE foram removidas
+           nesta revisao por estarem DEPRECIADAS pela Microsoft desde o
+           Windows 8; elas nao sao necessarias (as opcoes Hide* + a conta
+           provisionada ja pulam todas as telas) e podem causar
+           comportamento imprevisivel em builds recentes do Windows 11.
+           NetworkLocation tambem foi removido (ignorado desde o Win 8). -->
       <OOBE>
         <HideEULAPage>true</HideEULAPage>
         <HideLocalAccountScreen>true</HideLocalAccountScreen>
         <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
         <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
         <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
-        <NetworkLocation>Work</NetworkLocation>
         <ProtectYourPC>3</ProtectYourPC>
-        <SkipMachineOOBE>true</SkipMachineOOBE>
-        <SkipUserOOBE>true</SkipUserOOBE>
       </OOBE>
 
-      <!-- Conta local "User", administrador, SEM senha (conforme solicitado).
+      <!-- Conta local "UserLocal", administrador, SEM senha.
            Esta conta provisionada e o que dispensa a conta Microsoft. -->
       <UserAccounts>
         <LocalAccounts>
@@ -259,7 +280,9 @@
         </LocalAccounts>
       </UserAccounts>
 
-      <!-- Logon automatico na conta User (sem senha, permanente) -->
+      <!-- Logon automatico na conta UserLocal (sem senha).
+           Sem <LogonCount>, o logon automatico e PERMANENTE (o Windows
+           mantem AutoAdminLogon=1 no registro sem contador de expiracao). -->
       <AutoLogon>
         <Username>UserLocal</Username>
         <Enabled>true</Enabled>
@@ -301,5 +324,52 @@
 
     </component>
   </settings>
+
+  <!-- ====================================================================
+       ALTERNATIVA BIOS LEGACY / MBR (DESATIVADA)
+       Para usar em computadores antigos com BIOS Legacy (sem UEFI):
+       1) Substitua o bloco <DiskConfiguration> ativo la em cima por este;
+       2) No bloco <ImageInstall>, troque <PartitionID>3</PartitionID>
+          por <PartitionID>2</PartitionID>;
+       3) Remova os simbolos de comentario deste bloco antes de usar.
+       Lembre-se: Windows 11 oficialmente exige UEFI; use MBR apenas
+       com Windows 10 ou em cenarios de teste.
+
+       <DiskConfiguration>
+         <WillShowUI>OnError</WillShowUI>
+         <Disk wcm:action="add">
+           <DiskID>0</DiskID>
+           <WillWipeDisk>true</WillWipeDisk>
+           <CreatePartitions>
+             <CreatePartition wcm:action="add">
+               <Order>1</Order>
+               <Type>Primary</Type>
+               <Size>100</Size>
+             </CreatePartition>
+             <CreatePartition wcm:action="add">
+               <Order>2</Order>
+               <Type>Primary</Type>
+               <Extend>true</Extend>
+             </CreatePartition>
+           </CreatePartitions>
+           <ModifyPartitions>
+             <ModifyPartition wcm:action="add">
+               <Order>1</Order>
+               <PartitionID>1</PartitionID>
+               <Label>System</Label>
+               <Format>NTFS</Format>
+               <Active>true</Active>
+             </ModifyPartition>
+             <ModifyPartition wcm:action="add">
+               <Order>2</Order>
+               <PartitionID>2</PartitionID>
+               <Label>Windows</Label>
+               <Format>NTFS</Format>
+               <Letter>C</Letter>
+             </ModifyPartition>
+           </ModifyPartitions>
+         </Disk>
+       </DiskConfiguration>
+       ==================================================================== -->
 
 </unattend>
