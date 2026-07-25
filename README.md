@@ -74,6 +74,8 @@ Leia os quatro avisos abaixo antes de qualquer outra coisa. Eles evitam perda de
 | AnyBurn ou UltraISO | Apenas para instalação em máquina virtual (editar a ISO). |
 | O arquivo `Autounattend.xml` | Fornecido neste projeto. |
 
+> Desconecte o cabo de rede durante a instalação do Windows para evitar a execução do OOBE com integração à Microsoft Cloud
+
 ### Lista de verificação (evita 90% dos problemas)
 
 Antes de iniciar a instalação, confirme cada item:
