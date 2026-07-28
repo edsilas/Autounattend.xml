@@ -1,6 +1,6 @@
 # Instalação Automatizada do Windows
 
-![Windows 10](https://img.shields.io/badge/Windows-10-0078D4?logo=windows&logoColor=white) ![Windows 11](https://img.shields.io/badge/Windows-11-0078D4?logo=windows&logoColor=white) ![UEFI](https://img.shields.io/badge/Firmware-UEFI-107C10) ![GPT](https://img.shields.io/badge/Partition-GPT-107C10) ![License](https://img.shields.io/badge/License-MIT-yellow)
+<img src="https://img.shields.io/badge/Windows-10-0078D4?logo=windows&logoColor=white" alt="Windows 10"> <img src="https://img.shields.io/badge/Windows-11-0078D4?logo=windows&logoColor=white" alt="Windows 11"> <img src="https://img.shields.io/badge/Firmware-UEFI-107C10" alt="UEFI"> <img src="https://img.shields.io/badge/Partition-GPT-107C10" alt="GPT"> <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
 
 Instale o Windows 10 ou 11 **sem clicar em nada**: você inicia o computador pela mídia de instalação e, de 10 a 30 minutos depois, ele entrega a Área de Trabalho pronta — em português, com teclado ABNT2, conta local criada e ajustes de privacidade aplicados.
 
